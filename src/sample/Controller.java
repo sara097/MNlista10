@@ -5,7 +5,6 @@ import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
@@ -65,10 +64,10 @@ public class Controller {
     private TextField dParamTxt;
 
     //parametry klasy
-    private double a=0;
-    private double b=0;
-    private double c=0;
-    private double d=0;
+    private double a = 0;
+    private double b = 0;
+    private double c = 0;
+    private double d = 0;
 
 
     private TextFormatter format() { //prywatna metoda (może ją użyc tylko metoda z klasy) zwracająca obiekt typu TextFormatter
@@ -86,7 +85,7 @@ public class Controller {
 
     //metoda inicjalizująca okno aplikacji
     @FXML
-    private void initialize(){
+    private void initialize() {
         aParamTxt.setTextFormatter(format());
         bParamTxt.setTextFormatter(format());
         cParamTxt.setTextFormatter(format());
@@ -102,6 +101,10 @@ public class Controller {
     @FXML
     void clicked(ActionEvent event) {
 
+        IChart.getData().removeAll(IChart.getData());
+        uChart.getData().removeAll(uChart.getData());
+        vChart.getData().removeAll(vChart.getData());
+
         //ustawienie koloru pól tekstowych
         aParamTxt.setStyle("-fx-background-color: #ffffff;");
         bParamTxt.setStyle("-fx-background-color: #ffffff;");
@@ -111,13 +114,13 @@ public class Controller {
         //sprawdzenie czy pola tekstowe nie sa puste
         //jesli nie są to pobranie wartości
         //jesli są to zmiana koloru pól i wyrzucenie błędu
-        if(aParamTxt.getText().isEmpty() || bParamTxt.getText().isEmpty() || cParamTxt.getText().isEmpty() || dParamTxt.getText().isEmpty()){
+        if (aParamTxt.getText().isEmpty() || bParamTxt.getText().isEmpty() || cParamTxt.getText().isEmpty() || dParamTxt.getText().isEmpty()) {
             aParamTxt.setStyle("-fx-background-color: #e60b00;");
             bParamTxt.setStyle("-fx-background-color: #e60b00;");
             cParamTxt.setStyle("-fx-background-color: #e60b00;");
             dParamTxt.setStyle("-fx-background-color: #e60b00;");
             throw new IllegalArgumentException("Wrong parameters");
-        }else{
+        } else {
             a = Double.parseDouble(aParamTxt.getText());
             b = Double.parseDouble(bParamTxt.getText());
             c = Double.parseDouble(cParamTxt.getText());
@@ -161,7 +164,7 @@ public class Controller {
             yStart = new double[]{u0, v0}; //warunki początkowe
             yStop = new double[]{0, 1};
             //ustawienie event handlera
-            MaxPot maxPot=new MaxPot(c,d);
+            MaxPot maxPot = new MaxPot(c, d);
             //dodanie event handlera do integratora
             integrator.addEventHandler(maxPot, 0.1, 0.001, 2000);
             //ponowne całkowanie równania
@@ -169,32 +172,32 @@ public class Controller {
         }
 
         //pobranie list z wartosciami po całkowaniu
-        ArrayList <Double> uValues=path.getuValues();
-        ArrayList <Double> vValues=path.getvValues();
-        ArrayList <Double> time=path.getTimes();
+        ArrayList<Double> uValues = path.getuValues();
+        ArrayList<Double> vValues = path.getvValues();
+        ArrayList<Double> time = path.getTimes();
 
         //listy na wartosci maksymalne potencjału i odpowiadajace im czasy
-        ArrayList<Double> vMax=new ArrayList<>();
-        ArrayList <Double> tMax=new ArrayList<>();
+        ArrayList<Double> vMax = new ArrayList<>();
+        ArrayList<Double> tMax = new ArrayList<>();
 
         //utowrzenie serii danych
-        XYChart.Series<Number, Number> uSeries=new XYChart.Series();
-        XYChart.Series<Number, Number> vSeries=new XYChart.Series();
-        XYChart.Series<Number, Number> iSeries=new XYChart.Series();
+        XYChart.Series<Number, Number> uSeries = new XYChart.Series();
+        XYChart.Series<Number, Number> vSeries = new XYChart.Series();
+        XYChart.Series<Number, Number> iSeries = new XYChart.Series();
         vSeries.setName("Potencjał błony neuronu");
         uSeries.setName("Zmienna odpwoiadajaca za powrót do stanu spoczynkowego");
         iSeries.setName("Natężenie prądu");
 
 
-        for (int i=0; i<uValues.size(); i++){
+        for (int i = 0; i < uValues.size(); i++) {
 //dodanie wartosci do serii danych
-            if(time.get(i)>7.5)  iSeries.getData().add(new XYChart.Data<>(time.get(i), I));
-            else  iSeries.getData().add(new XYChart.Data<>(time.get(i), 0));
+            if (time.get(i) > 7.5) iSeries.getData().add(new XYChart.Data<>(time.get(i), I));
+            else iSeries.getData().add(new XYChart.Data<>(time.get(i), 0));
             uSeries.getData().add(new XYChart.Data<>(time.get(i), uValues.get(i)));
             vSeries.getData().add(new XYChart.Data<>(time.get(i), vValues.get(i)));
 
             //jesli wartosci są iglicami(czyli ponad 30 - są niewiele ponad) to dodajemy do list
-            if(vValues.get(i)>30){
+            if (vValues.get(i) > 30) {
                 vMax.add(vValues.get(i));
                 tMax.add(time.get(i));
             }
@@ -202,35 +205,49 @@ public class Controller {
         }
 
         //zmienne na wartosci ktore wyliczamy
-        double sum=0;
-        double mean=0;
-        double max=vMax.get(0);
-        double std=0;
-        ArrayList <Double> times=new ArrayList<>();
+        double sum = 0;
+        double mean = 0;
+        double max = vMax.get(0);
+        double std = 0;
+        ArrayList<Double> times = new ArrayList<>();
 
-        for (int i=0; i<vMax.size(); i++){
-            if(vMax.get(i)>max) max=vMax.get(i); //wyznaczanie wartosci maksymalnej
-            sum+=vMax.get(i); //oblicxanie sumy do sredniej
-            if(i>0){
-                times.add(tMax.get(i)-tMax.get(i-1)); //obliczanie czasu pomiedzy iglicami
+        for (int i = 0; i < vMax.size(); i++) {
+
+            if (vMax.get(i) > max) max = vMax.get(i); //wyznaczanie wartosci maksymalnej
+
+            sum += vMax.get(i); //oblicxanie sumy do sredniej
+
+            if (i > 0) {
+                times.add(tMax.get(i) - tMax.get(i - 1)); //obliczanie czasu pomiedzy iglicami
             }
         }
-        mean=sum/vMax.size(); //obliczanie sredniej
+        mean = sum / vMax.size(); //obliczanie sredniej
 
-        double stdSum=0;
-        for (int i=0; i<vMax.size(); i++){
-            stdSum+=(vMax.get(i)-mean); //obliczanie sumy do odchylenia standardowego
+        double ssum = 0;
+        double stdSum = 0;
+
+        for (int i = 0; i < vMax.size(); i++) {
+            stdSum += Math.pow(vMax.get(i) - mean, 2); //obliczanie sumy do odchylenia standardowego
+
+            if (i < vMax.size() - 1) ssum += times.get(i); //obliczanie sumy do czestotliwosci
         }
-        std=Math.pow(stdSum/vMax.size()-1, 0.5); //obliczanie odchylenia standardowego
+        std = Math.pow((stdSum / (vMax.size() - 1)), 0.5); //obliczanie odchylenia standardowego
+
+        //obliczanie częstotliwości
+        double T1 = te / vMax.size();
+        double f1 = 1 / T1;
+        double T2 = ssum / times.size();
+        double f2 = 1 / T2;
 
         //tworzenie Stringa do wyswietlenia w TextArea
-        String stats="Częstotliwość generowania iglic = " + "\n"+"Maksymalny potencjał iglicy = "+max+"\n"
-                +"Maksymalny potencjał iglicy wyznaczany ze średniej = " + mean + "\n"+
-                "Odchylenie standardowe = "+ std+"\n" +"\n"
-                +"Czas między maksymalnymi amplitudami = ";
+        String stats = "Częstotliwość gen. iglic (z ilości poków w czasie) = " + f1 + "\n" + "Maksymalny potencjał iglicy = " + max + "\n"
+                + "Maksymalny potencjał iglicy wyznaczany ze średniej = " + mean + "\n" +
+                "Odchylenie standardowe = " + std + "\n" +
+                "Częstotliwość gen. iglic (z czasów pomiedzy iglicami) = " + String.format("%.4f", f2) + "\n"
+                + "Czas między maksymalnymi amplitudami = ";
 
-        for(int i=0; i<times.size(); i++){
-            stats+="\n"+String.format("%.2f",times.get(i));
+        for (int i = 0; i < times.size(); i++) {
+            stats += "\n" + String.format("%.2f", times.get(i));
         }
 
         textArea.setText(stats); //wyswietelnie w text area
